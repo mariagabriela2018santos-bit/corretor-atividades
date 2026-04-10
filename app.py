@@ -3,7 +3,8 @@ import pandas as pd
 import sqlite3
 import cv2
 import numpy as np
-from pdf2image import convert_from_bytes
+import fitz  # PyMuPDF
+from PIL import Image
 import os
 import smtplib
 from email.message import EmailMessage
@@ -363,7 +364,14 @@ elif st.session_state.tela == "nova_atividade":
 
         if "grupos" not in st.session_state:
 
-            imagens = convert_from_bytes(uploaded.read())
+            pdf_bytes = uploaded.read()
+            doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+
+            imagens = []
+            for page in doc:
+                pix = page.get_pixmap()
+                img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                imagens.append(img)
 
             grupos = []
             paginas = []
