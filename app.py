@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
-from pyzbar.pyzbar import decode
+import cv2
+import numpy as np
 from pdf2image import convert_from_bytes
 import os
 import smtplib
@@ -62,9 +63,12 @@ def voltar(destino):
 # 🧠 QR CODE
 # =========================
 def detectar_qr(img):
-    decoded = decode(img)
-    if decoded:
-        return decoded[0].data.decode("utf-8").strip().upper()
+    img_np = np.array(img)
+    detector = cv2.QRCodeDetector()
+    data, bbox, _ = detector.detectAndDecode(img_np)
+
+    if data:
+        return data.strip().upper()
     return None
 
 # =========================
