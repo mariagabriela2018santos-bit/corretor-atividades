@@ -1,5 +1,6 @@
 streamlit
 pandas
-pdf2image
 opencv-python-headless
 numpy
+pymupdf
+Pillow
