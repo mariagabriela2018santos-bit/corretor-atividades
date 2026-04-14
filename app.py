@@ -362,14 +362,15 @@ elif st.session_state.tela == "atividades":
                     del st.session_state.confirm_del_atividade
                     st.rerun()
 
-        if st.button("➕ Nova atividade"):
-                st.session_state.tela = "nova_atividade"
-                st.rerun()
 
             with col2:
                 if st.button("❌ Cancelar", key="cancel_atv"):
                     del st.session_state.confirm_del_atividade
                     st.rerun()
+
+          if st.button("➕ Nova atividade"):
+              st.session_state.tela = "nova_atividade"
+            st.rerun()
 
 # =========================
 # ✏️ NOVA ATIVIDADE
