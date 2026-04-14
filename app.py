@@ -20,7 +20,7 @@ if not os.path.exists("imagens"):
 # =========================
 # 📧 FUNÇÃO EMAIL (ATUALIZADA)
 # =========================
-def enviar_email(destinatario, nome, feedback, caminhos_imagens, assunto, email_remetente, senha_app, assinatura):
+def enviar_email(destinatario, nome, feedback, caminhos_imagens, assunto, email_remetente, senha_app, assinatura, pdf_bytes=None, pdf_nome="material_apoio.pdf"):
 
     msg = EmailMessage()
     msg["Subject"] = assunto
@@ -39,6 +39,7 @@ Em anexo, você encontrará a atividade realizada e um material de apoio que pod
 """
     msg.set_content(corpo)
 
+    # imagens
     for caminho in caminhos_imagens:
         if os.path.exists(caminho):
             with open(caminho, "rb") as f:
@@ -48,6 +49,15 @@ Em anexo, você encontrará a atividade realizada e um material de apoio que pod
                     subtype="png",
                     filename=os.path.basename(caminho)
                 )
+
+    # 🔥 PDF ANEXO (NOVO)
+    if pdf_bytes:
+        msg.add_attachment(
+            pdf_bytes,
+            maintype="application",
+            subtype="pdf",
+            filename=pdf_nome
+        )
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
         smtp.login(email_remetente, senha_app)
@@ -167,7 +177,6 @@ if st.session_state.tela == "login":
             st.success("Conta criada")
         except:
             st.error("Usuário já existe")
-
 # =========================
 # 📂 CURSOS
 # =========================
@@ -544,6 +553,8 @@ elif st.session_state.tela == "nova_atividade":
             st.session_state.tela = "atividades"
             st.rerun()
 
+
+
 # =========================
 # 📊 RESULTADO (COM EMAIL)
 # =========================
@@ -568,12 +579,17 @@ elif st.session_state.tela == "resultado":
     senha_app = st.text_input("Senha de app", type="password")
     assinatura = st.text_area("Assinatura do e-mail", value="Att,\nProfessor(a)")
 
+    # 🔥 NOVO CAMPO PDF
+    pdf_file = st.file_uploader("📎 Anexar material de apoio (PDF)", type=["pdf"])
+
+    pdf_bytes = pdf_file.read() if pdf_file else None
+    pdf_nome = pdf_file.name if pdf_file else "material_apoio.pdf"
+
     if df.empty:
         st.warning("Nenhum dado encontrado")
     else:
         st.dataframe(df[["nome", "turma", "email", "feedback"]])
 
-        # ✅ KEY adicionada
         if st.button("📤 Enviar para todos", key="enviar_todos"):
             for _, row in df.iterrows():
                 if int(row["enviado"]) == 0:
@@ -587,7 +603,9 @@ elif st.session_state.tela == "resultado":
                             assunto_email,
                             email_remetente,
                             senha_app,
-                            assinatura
+                            assinatura,
+                            pdf_bytes,
+                            pdf_nome
                         )
 
                         conn4 = sqlite3.connect("app.db")
@@ -610,24 +628,6 @@ elif st.session_state.tela == "resultado":
 
             st.markdown(f"### {row['nome']} - {row['turma']}")
 
-            if row["imagens"]:
-                caminhos = row["imagens"].split(";")
-
-                for i in range(0, len(caminhos), 2):
-                    col1, col2 = st.columns(2)
-
-                    if i < len(caminhos) and os.path.exists(caminhos[i]):
-                        col1.image(caminhos[i], use_column_width=True)
-
-                    if i + 1 < len(caminhos) and os.path.exists(caminhos[i + 1]):
-                        col2.image(caminhos[i + 1], use_column_width=True)
-
-            st.markdown(f"**Feedback:** {row['feedback']}")
-
-            status = "✅ Enviado" if int(row["enviado"]) == 1 else "⏳ Não enviado"
-            st.write(f"Status: {status}")
-
-            # ✅ FIX PRINCIPAL: key única por botão
             if int(row["enviado"]) == 0:
                 if st.button(
                     f"📧 Enviar para {row['nome']}",
@@ -644,18 +644,10 @@ elif st.session_state.tela == "resultado":
                             assunto_email,
                             email_remetente,
                             senha_app,
-                            assinatura
+                            assinatura,
+                            pdf_bytes,
+                            pdf_nome
                         )
-
-                        conn4 = sqlite3.connect("app.db")
-                        c4 = conn4.cursor()
-                        c4.execute("""
-                            UPDATE resultados
-                            SET enviado=1
-                            WHERE atividade_id=? AND email=?
-                        """, (st.session_state.atividade_id, row["email"]))
-                        conn4.commit()
-                        conn4.close()
 
                         st.success("Email enviado!")
                         st.rerun()
