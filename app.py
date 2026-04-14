@@ -377,7 +377,7 @@ elif st.session_state.tela == "nova_atividade":
         # =========================
         # 📄 CARREGAR PDF
         # =========================
-        if "grupos" not in st.session_state and "imagens" not in st.session_state:
+        if "imagens" not in st.session_state:
 
             pdf_bytes = uploaded.read()
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -389,11 +389,12 @@ elif st.session_state.tela == "nova_atividade":
                 imagens.append(img)
 
             st.session_state.imagens = imagens
+            st.session_state.etapa = "marcar"
 
         # =========================
-        # ✂️ ETAPA 1: MARCAR QUEBRAS
+        # ✂️ ETAPA 1: MARCAR
         # =========================
-        if "grupos" not in st.session_state:
+        if st.session_state.get("etapa") == "marcar":
 
             imagens = st.session_state.imagens
 
@@ -409,12 +410,10 @@ elif st.session_state.tela == "nova_atividade":
                 if st.button(f"➡️ Novo aluno começa aqui (página {i+1})", key=f"break_{i}"):
                     if i not in st.session_state.quebras:
                         st.session_state.quebras.append(i)
-                        st.success(f"Marcado início na página {i+1}")
 
             if st.button("↩️ Desfazer última marcação"):
                 if len(st.session_state.quebras) > 1:
                     st.session_state.quebras.pop()
-                    st.warning("Última marcação removida")
 
             if st.button("✅ Finalizar separação"):
 
@@ -424,150 +423,146 @@ elif st.session_state.tela == "nova_atividade":
                 grupos = []
 
                 for i in range(len(quebras)-1):
-                    inicio = quebras[i]
-                    fim = quebras[i+1]
-
                     grupos.append({
                         "turma": "UNICA",
-                        "paginas": imagens[inicio:fim]
+                        "paginas": imagens[quebras[i]:quebras[i+1]]
                     })
 
                 st.session_state.grupos = grupos
                 st.session_state.indice = 0
                 st.session_state.respostas = {}
+                st.session_state.etapa = "corrigir"
 
                 del st.session_state.quebras
-                del st.session_state.imagens
 
                 st.rerun()
 
-            st.stop()  # 🔥 trava aqui até finalizar separação
-
         # =========================
-        # 🧠 ETAPA 2: FEEDBACK (igual ao seu)
+        # 🧠 ETAPA 2: CORREÇÃO
         # =========================
-        grupos = st.session_state.grupos
-        i = st.session_state.indice
-        grupo = grupos[i]
+        if st.session_state.get("etapa") == "corrigir":
 
-        alunos_df = pd.read_sql_query(
-            "SELECT * FROM alunos WHERE curso_id=?",
-            conn,
-            params=(st.session_state.curso_id,)
-        )
+            grupos = st.session_state.grupos
+            i = st.session_state.indice
+            grupo = grupos[i]
 
-        col1, col2 = st.columns([3, 1])
+            alunos_df = pd.read_sql_query(
+                "SELECT * FROM alunos WHERE curso_id=?",
+                conn,
+                params=(st.session_state.curso_id,)
+            )
 
-        with col1:
-            paginas = grupo["paginas"]
-            for j in range(0, len(paginas), 2):
-                c1, c2 = st.columns(2)
-                if j < len(paginas):
-                    c1.image(paginas[j], use_column_width=True)
-                if j + 1 < len(paginas):
-                    c2.image(paginas[j + 1], use_column_width=True)
+            col1, col2 = st.columns([3, 1])
 
-        with col2:
+            with col1:
+                paginas = grupo["paginas"]
+                for j in range(0, len(paginas), 2):
+                    c1, c2 = st.columns(2)
+                    if j < len(paginas):
+                        c1.image(paginas[j], use_column_width=True)
+                    if j + 1 < len(paginas):
+                        c2.image(paginas[j + 1], use_column_width=True)
 
-            alunos_filtrados = alunos_df
-            st.subheader("Selecionar aluno")
+            with col2:
 
-            resposta_atual = st.session_state.respostas.get(i, {})
+                st.subheader("Selecionar aluno")
 
-            if resposta_atual.get("aluno"):
+                resposta_atual = st.session_state.respostas.get(i, {})
 
-                st.success(f"Aluno: {resposta_atual['aluno']}")
+                if resposta_atual.get("aluno"):
 
-                if st.button("Trocar aluno", key=f"trocar_{i}"):
-                    st.session_state.respostas[i]["aluno"] = ""
-                    st.rerun()
+                    st.success(f"Aluno: {resposta_atual['aluno']}")
 
-            else:
-                alunos_lista = alunos_filtrados["nome"].tolist()
+                    if st.button("Trocar aluno", key=f"trocar_{i}"):
+                        st.session_state.respostas[i]["aluno"] = ""
+                        st.rerun()
 
-                aluno_escolhido = st.selectbox(
-                    "🔍 Buscar e selecionar aluno",
-                    [""] + alunos_lista,
-                    key=f"select_{i}"
+                else:
+                    alunos_lista = alunos_df["nome"].tolist()
+
+                    aluno_escolhido = st.selectbox(
+                        "🔍 Buscar e selecionar aluno",
+                        [""] + alunos_lista,
+                        key=f"select_{i}"
+                    )
+
+                    if aluno_escolhido:
+                        aluno_data = alunos_df[
+                            alunos_df["nome"] == aluno_escolhido
+                        ].iloc[0]
+
+                        st.session_state.respostas[i] = {
+                            "aluno": aluno_data["nome"],
+                            "email": aluno_data["email"],
+                            "feedback": ""
+                        }
+                        st.rerun()
+
+                feedback = st.text_area(
+                    "Feedback",
+                    value=resposta_atual.get("feedback", ""),
+                    key=f"fb_{i}"
                 )
 
-                if aluno_escolhido:
-                    aluno_data = alunos_filtrados[
-                        alunos_filtrados["nome"] == aluno_escolhido
-                    ].iloc[0]
+                if i not in st.session_state.respostas:
+                    st.session_state.respostas[i] = {}
 
-                    st.session_state.respostas[i] = {
-                        "aluno": aluno_data["nome"],
-                        "email": aluno_data["email"],
-                        "feedback": ""
-                    }
+                st.session_state.respostas[i]["feedback"] = feedback
+
+                col_prev, col_next = st.columns(2)
+
+                if col_prev.button("⬅️", disabled=(i == 0)):
+                    st.session_state.indice -= 1
                     st.rerun()
 
-            feedback = st.text_area(
-                "Feedback",
-                value=resposta_atual.get("feedback", ""),
-                key=f"fb_{i}"
-            )
+                if col_next.button("➡️", disabled=(i >= len(grupos) - 1)):
+                    st.session_state.indice += 1
+                    st.rerun()
 
-            if i not in st.session_state.respostas:
-                st.session_state.respostas[i] = {}
+            if st.button("💾 Salvar"):
 
-            st.session_state.respostas[i]["feedback"] = feedback
+                conn2 = sqlite3.connect("app.db", timeout=10)
+                c2 = conn2.cursor()
 
-            col_prev, col_next = st.columns(2)
+                c2.execute(
+                    "INSERT INTO atividades (nome, curso_id) VALUES (?,?)",
+                    (nome_atv, st.session_state.curso_id)
+                )
+                atv_id = c2.lastrowid
 
-            if col_prev.button("⬅️", disabled=(i == 0)):
-                st.session_state.indice -= 1
+                for i, grupo in enumerate(grupos):
+                    r = st.session_state.respostas.get(i, {})
+                    if r.get("aluno"):
+
+                        caminhos = []
+
+                        for j, img in enumerate(grupo["paginas"]):
+                            caminho = f"imagens/atv_{atv_id}_{i}_{j}.png"
+                            img.save(caminho)
+                            caminhos.append(caminho)
+
+                        c2.execute("""
+                        INSERT INTO resultados
+                        (atividade_id,nome,email,turma,feedback,imagens)
+                        VALUES (?,?,?,?,?,?)
+                        """, (
+                            atv_id,
+                            r["aluno"],
+                            r["email"],
+                            grupo["turma"],
+                            r["feedback"],
+                            ";".join(caminhos)
+                        ))
+
+                conn2.commit()
+                conn2.close()
+
+                for k in ["grupos", "indice", "respostas", "etapa"]:
+                    if k in st.session_state:
+                        del st.session_state[k]
+
+                st.session_state.tela = "atividades"
                 st.rerun()
-
-            if col_next.button("➡️", disabled=(i >= len(grupos) - 1)):
-                st.session_state.indice += 1
-                st.rerun()
-
-        if st.button("💾 Salvar"):
-
-            conn2 = sqlite3.connect("app.db", timeout=10)
-            c2 = conn2.cursor()
-
-            c2.execute(
-                "INSERT INTO atividades (nome, curso_id) VALUES (?,?)",
-                (nome_atv, st.session_state.curso_id)
-            )
-            atv_id = c2.lastrowid
-
-            for i, grupo in enumerate(grupos):
-                r = st.session_state.respostas.get(i, {})
-                if r.get("aluno"):
-
-                    caminhos = []
-
-                    for j, img in enumerate(grupo["paginas"]):
-                        caminho = f"imagens/atv_{atv_id}_{i}_{j}.png"
-                        img.save(caminho)
-                        caminhos.append(caminho)
-
-                    c2.execute("""
-                    INSERT INTO resultados
-                    (atividade_id,nome,email,turma,feedback,imagens)
-                    VALUES (?,?,?,?,?,?)
-                    """, (
-                        atv_id,
-                        r["aluno"],
-                        r["email"],
-                        grupo["turma"],
-                        r["feedback"],
-                        ";".join(caminhos)
-                    ))
-
-            conn2.commit()
-            conn2.close()
-
-            for k in ["grupos", "indice", "respostas"]:
-                if k in st.session_state:
-                    del st.session_state[k]
-
-            st.session_state.tela = "atividades"
-            st.rerun()
 # =========================
 # 📊 RESULTADO (COM EMAIL)
 # =========================
