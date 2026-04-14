@@ -202,8 +202,8 @@ elif st.session_state.tela == "cursos":
                 st.rerun()
 
         with col3:
-             if st.button("🗑️", key=f"del_{curso[0]}"):
-                 st.session_state.confirm_del_curso = curso[0]
+            if st.button("🗑️", key=f"del_{curso[0]}"):
+                st.session_state.confirm_del_curso = curso[0]
 
         # confirmação
         if "confirm_del_curso" in st.session_state:
