@@ -245,17 +245,16 @@ elif st.session_state.tela == "novo_curso":
 
     nome = st.text_input("Nome do aluno")
     email = st.text_input("Email")
-    turma = st.text_input("Turma")
 
     if st.button("Adicionar aluno"):
-        if nome and email and turma:
-            st.session_state.lista_alunos.append((nome, email, turma))
+        if nome and email:
+            st.session_state.lista_alunos.append((nome, email))
             st.rerun()
 
     if st.session_state.lista_alunos:
         st.dataframe(pd.DataFrame(
             st.session_state.lista_alunos,
-            columns=["Nome", "Email", "Turma"]
+            columns=["Nome", "Email"]
         ))
 
     if st.button("Salvar curso"):
@@ -269,10 +268,10 @@ elif st.session_state.tela == "novo_curso":
 
             for aluno in st.session_state.lista_alunos:
                 c.execute(
-                    "INSERT INTO alunos (nome,email,turma,curso_id) VALUES (?,?,?,?)",
+                    "INSERT INTO alunos (nome,email,curso_id) VALUES (?,?,?)",
                     aluno + (curso_id,)
                 )
-
+                
             conn.commit()
             st.session_state.lista_alunos = []
             st.session_state.tela = "cursos"
@@ -301,9 +300,10 @@ elif st.session_state.tela == "editar_alunos":
     if st.button("Adicionar"):
         if nome and email:
             c.execute(
-                "INSERT INTO alunos (nome,email,curso_id) VALUES (?,?,?,?)",
+                "INSERT INTO alunos (nome,email,curso_id) VALUES (?,?,?)",
                 (nome, email, st.session_state.curso_id)
             )
+            
             conn.commit()
             st.rerun()
 
@@ -488,12 +488,13 @@ elif st.session_state.tela == "nova_atividade":
                 st.session_state.indice += 1
                 st.rerun()
                 
-           curso = c.execute(
-               "SELECT turma FROM cursos WHERE id=?",
-               (st.session_state.curso_id,)
-           ).fetchone()
+    # 🔥 pegar turma do curso
+    curso = c.execute(
+        "SELECT turma FROM cursos WHERE id=?",
+        (st.session_state.curso_id,)
+    ).fetchone()
 
-           turma_curso = curso[0] if curso else "SEM TURMA"
+    turma_curso = curso[0] if curso and curso[0] else "SEM TURMA"
         
         # 💾 SALVAR
         if st.button("💾 Salvar atividade"):
