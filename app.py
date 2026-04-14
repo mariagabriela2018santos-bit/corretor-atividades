@@ -761,6 +761,6 @@ elif st.session_state.tela == "resultado":
                 except Exception as e:
                     st.error(f"Erro ao enviar: {e}")
                 
-             st.divider()      
+            st.divider()      
 
 
