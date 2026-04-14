@@ -34,7 +34,7 @@ Segue o feedback da sua atividade:
 
 {feedback}
 
-Em anexo está a atividade realizada e um texto de apoio caso queira se aprofundar mais no assunto.
+Em anexo, você encontrará a atividade realizada e um material de apoio que pode te ajudar a revisar e aprofundar o conteúdo trabalhado.
 {assinatura}
 """
     msg.set_content(corpo)
