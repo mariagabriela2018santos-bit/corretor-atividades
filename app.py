@@ -709,9 +709,8 @@ elif st.session_state.tela == "resultado":
             # =========================
             # 📧 ENVIO INDIVIDUAL
             # =========================
-            if int(row["enviado"]) == 0:
                 if st.button(
-                    f"📧 Enviar para {row['nome']}",
+                    f"🔁 Reenviar para {row['nome']}"
                     key=f"send_{row['email']}_{idx}"
                 ):
 
