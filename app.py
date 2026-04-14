@@ -403,7 +403,6 @@ elif st.session_state.tela == "nova_atividade":
             grupos = []
             for i in range(0, len(imagens), paginas_por_aluno):
                 grupos.append({
-                    "turma": "UNICA",
                     "paginas": imagens[i:i + paginas_por_aluno]
                 })
 
@@ -487,17 +486,17 @@ elif st.session_state.tela == "nova_atividade":
             if col_next.button("➡️ Próximo", disabled=(i >= len(grupos) - 1)):
                 st.session_state.indice += 1
                 st.rerun()
-                
-    # 🔥 pegar turma do curso
-    curso = c.execute(
-        "SELECT turma FROM cursos WHERE id=?",
-        (st.session_state.curso_id,)
-    ).fetchone()
-
-    turma_curso = curso[0] if curso and curso[0] else "SEM TURMA"
         
         # 💾 SALVAR
         if st.button("💾 Salvar atividade"):
+
+            # 🔥 pegar turma do curso (AQUI é o lugar certo)
+            curso = c.execute(
+                "SELECT turma FROM cursos WHERE id=?",
+                (st.session_state.curso_id,)
+            ).fetchone()
+
+            turma_curso = curso[0] if curso and curso[0] else "SEM TURMA"
 
             conn2 = sqlite3.connect("app.db", timeout=10)
             c2 = conn2.cursor()
