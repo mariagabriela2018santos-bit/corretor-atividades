@@ -714,53 +714,53 @@ elif st.session_state.tela == "resultado":
                 key=f"send_{row['email']}_{idx}"
             ):
 
-            caminhos = row["imagens"].split(";") if row["imagens"] else []
+                caminhos = row["imagens"].split(";") if row["imagens"] else []
 
-            try:
-                # 🔥 BUSCAR FEEDBACK ATUALIZADO DO BANCO
-                conn_temp = sqlite3.connect("app.db")
-                c_temp = conn_temp.cursor()
+                try:
+                    # 🔥 BUSCAR FEEDBACK ATUALIZADO DO BANCO
+                    conn_temp = sqlite3.connect("app.db")
+                    c_temp = conn_temp.cursor()
 
-                resultado = c_temp.execute("""
-                    SELECT feedback FROM resultados
-                    WHERE atividade_id=? AND email=?
-                """, (st.session_state.atividade_id, row["email"])).fetchone()
+                    resultado = c_temp.execute("""
+                        SELECT feedback FROM resultados
+                        WHERE atividade_id=? AND email=?
+                    """, (st.session_state.atividade_id, row["email"])).fetchone()
 
-                feedback_atual = resultado[0] if resultado else ""
+                    feedback_atual = resultado[0] if resultado else ""
 
-                conn_temp.close()
+                    conn_temp.close()
 
-                # 🔥 ENVIO COM FEEDBACK CORRETO
-                enviar_email(
-                    row["email"],
-                    row["nome"],
-                    feedback_atual,
-                    caminhos,
-                    assunto_email,
-                    email_remetente,
-                    senha_app,
-                    assinatura,
-                    pdf_bytes,
-                    pdf_nome
-                )
+                    # 🔥 ENVIO COM FEEDBACK CORRETO
+                    enviar_email(
+                        row["email"],
+                        row["nome"],
+                        feedback_atual,
+                        caminhos,
+                        assunto_email,
+                        email_remetente,
+                        senha_app,
+                        assinatura,
+                        pdf_bytes,
+                        pdf_nome
+                    )
 
-                # 🔥 MARCAR COMO ENVIADO
-                conn4 = sqlite3.connect("app.db")
-                c4 = conn4.cursor()
-                c4.execute("""
-                    UPDATE resultados
-                    SET enviado=1
-                    WHERE atividade_id=? AND email=?
-                """, (st.session_state.atividade_id, row["email"]))
-                conn4.commit()
-                conn4.close()
+                    # 🔥 MARCAR COMO ENVIADO
+                    conn4 = sqlite3.connect("app.db")
+                    c4 = conn4.cursor()
+                    c4.execute("""
+                        UPDATE resultados
+                        SET enviado=1
+                        WHERE atividade_id=? AND email=?
+                    """, (st.session_state.atividade_id, row["email"]))
+                    conn4.commit()
+                    conn4.close()
 
-                st.success("Email reenviado!")
-                st.rerun()
+                    st.success("Email reenviado!")
+                    st.rerun()
   
-            except Exception as e:
-                st.error(f"Erro ao enviar: {e}")
+                except Exception as e:
+                    st.error(f"Erro ao enviar: {e}")
                 
-         st.divider()      
+             st.divider()      
 
-st.divider()
+
