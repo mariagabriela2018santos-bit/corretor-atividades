@@ -631,33 +631,64 @@ elif st.session_state.tela == "resultado":
 
         for idx, row in df.iterrows():
 
-            st.markdown(f"### {row['nome']} - {row['turma']}")
+    st.markdown(f"### {row['nome']} - {row['turma']}")
 
-            if int(row["enviado"]) == 0:
-                if st.button(
-                    f"📧 Enviar para {row['nome']}",
-                    key=f"send_{row['email']}_{idx}"
-                ):
-                    caminhos = row["imagens"].split(";") if row["imagens"] else []
+    # 📄 IMAGENS
+    if row["imagens"]:
+        caminhos = row["imagens"].split(";")
 
-                    try:
-                        enviar_email(
-                            row["email"],
-                            row["nome"],
-                            row["feedback"],
-                            caminhos,
-                            assunto_email,
-                            email_remetente,
-                            senha_app,
-                            assinatura,
-                            pdf_bytes,
-                            pdf_nome
-                        )
+        for i in range(0, len(caminhos), 2):
+            col1, col2 = st.columns(2)
 
-                        st.success("Email enviado!")
-                        st.rerun()
+            if i < len(caminhos) and os.path.exists(caminhos[i]):
+                col1.image(caminhos[i], use_column_width=True)
 
-                    except Exception as e:
-                        st.error(f"Erro ao enviar: {e}")
+            if i + 1 < len(caminhos) and os.path.exists(caminhos[i + 1]):
+                col2.image(caminhos[i + 1], use_column_width=True)
 
-            st.divider()
+    # 🧠 FEEDBACK
+    st.markdown(f"**Feedback:** {row['feedback']}")
+
+    # 📧 STATUS
+    status = "✅ Enviado" if int(row["enviado"]) == 1 else "⏳ Não enviado"
+    st.write(f"Status: {status}")
+
+    # 📤 BOTÃO ENVIO INDIVIDUAL
+    if int(row["enviado"]) == 0:
+        if st.button(
+            f"📧 Enviar para {row['nome']}",
+            key=f"send_{row['email']}_{idx}"
+        ):
+            caminhos = row["imagens"].split(";") if row["imagens"] else []
+
+            try:
+                enviar_email(
+                    row["email"],
+                    row["nome"],
+                    row["feedback"],
+                    caminhos,
+                    assunto_email,
+                    email_remetente,
+                    senha_app,
+                    assinatura,
+                    pdf_bytes,
+                    pdf_nome
+                )
+
+                conn4 = sqlite3.connect("app.db")
+                c4 = conn4.cursor()
+                c4.execute("""
+                    UPDATE resultados
+                    SET enviado=1
+                    WHERE atividade_id=? AND email=?
+                """, (st.session_state.atividade_id, row["email"]))
+                conn4.commit()
+                conn4.close()
+
+                st.success("Email enviado!")
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"Erro ao enviar: {e}")
+
+    st.divider()
