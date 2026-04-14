@@ -660,36 +660,36 @@ elif st.session_state.tela == "resultado":
                     key=f"send_{row['email']}_{idx}"
                 ):
             
-                caminhos = row["imagens"].split(";") if row["imagens"] else []
+                    caminhos = row["imagens"].split(";") if row["imagens"] else []
 
-                try:
-                enviar_email(
-                    row["email"],
-                    row["nome"],
-                    row["feedback"],
-                    caminhos,
-                    assunto_email,
-                    email_remetente,
-                    senha_app,
-                    assinatura,
-                    pdf_bytes,
-                    pdf_nome
-                )
+                    try:
+                        enviar_email(
+                            row["email"],
+                            row["nome"],
+                            row["feedback"],
+                            caminhos,
+                            assunto_email,
+                            email_remetente,
+                            senha_app,
+                            assinatura,
+                            pdf_bytes,
+                            pdf_nome
+                        )
 
-                conn4 = sqlite3.connect("app.db")
-                c4 = conn4.cursor()
-                c4.execute("""
-                    UPDATE resultados
-                    SET enviado=1
-                    WHERE atividade_id=? AND email=?
-                """, (st.session_state.atividade_id, row["email"]))
-                conn4.commit()
-                conn4.close()
+                        conn4 = sqlite3.connect("app.db")
+                        c4 = conn4.cursor()
+                        c4.execute("""
+                            UPDATE resultados
+                            SET enviado=1
+                            WHERE atividade_id=? AND email=?
+                        """, (st.session_state.atividade_id, row["email"]))
+                        conn4.commit()
+                        conn4.close()
 
-                st.success("Email enviado!")
-                st.rerun()
+                        st.success("Email enviado!")
+                        st.rerun()
 
-            except Exception as e:
-                st.error(f"Erro ao enviar: {e}")
+                    except Exception as e:
+                        st.error(f"Erro ao enviar: {e}")
 
-    st.divider()
+            st.divider()
