@@ -707,43 +707,60 @@ elif st.session_state.tela == "resultado":
             st.write(f"Status: {status}")
 
             # =========================
-            # 📧 ENVIO INDIVIDUAL
+            # 📧 REENVIO INDIVIDUAL (CORRIGIDO)
             # =========================
             if st.button(
                 f"🔁 Reenviar para {row['nome']}",
                 key=f"send_{row['email']}_{idx}"
             ):
 
-                caminhos = row["imagens"].split(";") if row["imagens"] else []
+            caminhos = row["imagens"].split(";") if row["imagens"] else []
 
-                try:
-                    enviar_email(
-                        row["email"],
-                        row["nome"],
-                        row["feedback"],
-                        caminhos,
-                        assunto_email,
-                        email_remetente,
-                        senha_app,
-                        assinatura,
-                        pdf_bytes,
-                        pdf_nome
-                    )
+            try:
+                # 🔥 BUSCAR FEEDBACK ATUALIZADO DO BANCO
+                conn_temp = sqlite3.connect("app.db")
+                c_temp = conn_temp.cursor()
 
-                    conn4 = sqlite3.connect("app.db")
-                    c4 = conn4.cursor()
-                    c4.execute("""
-                        UPDATE resultados
-                        SET enviado=1
-                        WHERE atividade_id=? AND email=?
-                    """, (st.session_state.atividade_id, row["email"]))
-                    conn4.commit()
-                    conn4.close()
+                resultado = c_temp.execute("""
+                    SELECT feedback FROM resultados
+                    WHERE atividade_id=? AND email=?
+                """, (st.session_state.atividade_id, row["email"])).fetchone()
 
-                    st.success("Email enviado!")
-                    st.rerun()
+                feedback_atual = resultado[0] if resultado else ""
 
-                except Exception as e:
-                    st.error(f"Erro ao enviar: {e}")
+                conn_temp.close()
 
-        st.divider()
+                # 🔥 ENVIO COM FEEDBACK CORRETO
+                enviar_email(
+                    row["email"],
+                    row["nome"],
+                    feedback_atual,
+                    caminhos,
+                    assunto_email,
+                    email_remetente,
+                    senha_app,
+                    assinatura,
+                    pdf_bytes,
+                    pdf_nome
+                )
+
+                # 🔥 MARCAR COMO ENVIADO
+                conn4 = sqlite3.connect("app.db")
+                c4 = conn4.cursor()
+                c4.execute("""
+                    UPDATE resultados
+                    SET enviado=1
+                    WHERE atividade_id=? AND email=?
+                """, (st.session_state.atividade_id, row["email"]))
+                conn4.commit()
+                conn4.close()
+
+                st.success("Email reenviado!")
+                st.rerun()
+  
+            except Exception as e:
+                st.error(f"Erro ao enviar: {e}")
+                
+         st.divider()      
+
+st.divider()
