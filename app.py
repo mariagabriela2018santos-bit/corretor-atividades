@@ -226,9 +226,9 @@ elif st.session_state.tela == "cursos":
                     del st.session_state.confirm_del_curso
                     st.rerun()
 
-    if st.button("➕ Novo curso"):
-        st.session_state.tela = "novo_curso"
-        st.rerun()
+        if st.button("➕ Novo curso"):
+            st.session_state.tela = "novo_curso"
+            st.rerun()
 
 # =========================
 # 👥 NOVO CURSO
