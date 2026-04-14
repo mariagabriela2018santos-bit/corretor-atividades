@@ -631,37 +631,38 @@ elif st.session_state.tela == "resultado":
 
         for idx, row in df.iterrows():
 
-    st.markdown(f"### {row['nome']} - {row['turma']}")
+            st.markdown(f"### {row['nome']} - {row['turma']}")
 
-    # 📄 IMAGENS
-    if row["imagens"]:
-        caminhos = row["imagens"].split(";")
+            # 🔥 MOSTRAR IMAGENS (VOLTOU)
+            if row["imagens"]:
+                caminhos = row["imagens"].split(";")
 
-        for i in range(0, len(caminhos), 2):
-            col1, col2 = st.columns(2)
+                for i in range(0, len(caminhos), 2):
+                    col1, col2 = st.columns(2)
 
-            if i < len(caminhos) and os.path.exists(caminhos[i]):
-                col1.image(caminhos[i], use_column_width=True)
+                    if i < len(caminhos) and os.path.exists(caminhos[i]):
+                        col1.image(caminhos[i], use_column_width=True)
 
-            if i + 1 < len(caminhos) and os.path.exists(caminhos[i + 1]):
-                col2.image(caminhos[i + 1], use_column_width=True)
+                    if i + 1 < len(caminhos) and os.path.exists(caminhos[i + 1]):
+                         col2.image(caminhos[i + 1], use_column_width=True)
 
-    # 🧠 FEEDBACK
-    st.markdown(f"**Feedback:** {row['feedback']}")
+            # 🔥 FEEDBACK (VOLTOU)
+            st.markdown(f"**Feedback:** {row['feedback']}")
 
-    # 📧 STATUS
-    status = "✅ Enviado" if int(row["enviado"]) == 1 else "⏳ Não enviado"
-    st.write(f"Status: {status}")
+            # 🔥 STATUS (VOLTOU)
+            status = "✅ Enviado" if int(row["enviado"]) == 1 else "⏳ Não enviado"
+            st.write(f"Status: {status}")
 
-    # 📤 BOTÃO ENVIO INDIVIDUAL
-    if int(row["enviado"]) == 0:
-        if st.button(
-            f"📧 Enviar para {row['nome']}",
-            key=f"send_{row['email']}_{idx}"
-        ):
-            caminhos = row["imagens"].split(";") if row["imagens"] else []
+            # 🔥 BOTÃO INDIVIDUAL (COM PDF)
+            if int(row["enviado"]) == 0:
+                if st.button(
+                    f"📧 Enviar para {row['nome']}",
+                    key=f"send_{row['email']}_{idx}"
+                ):
+            
+                caminhos = row["imagens"].split(";") if row["imagens"] else []
 
-            try:
+                try:
                 enviar_email(
                     row["email"],
                     row["nome"],
