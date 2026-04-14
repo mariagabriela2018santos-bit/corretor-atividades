@@ -115,6 +115,12 @@ try:
 except:
     pass
 
+try:
+    c.execute("ALTER TABLE cursos ADD COLUMN turma TEXT")
+    conn.commit()
+except:
+    pass
+
 conn.commit()
 
 # =========================
@@ -232,7 +238,7 @@ elif st.session_state.tela == "novo_curso":
     st.title("Novo curso")
 
     nome_curso = st.text_input("Nome do curso")
-    turma_padrao = st.text_input("Turma do curso (ex: 3ºA)")
+    turma_curso = st.text_input("Turma (ex: A)")
 
     if "lista_alunos" not in st.session_state:
         st.session_state.lista_alunos = []
@@ -255,9 +261,10 @@ elif st.session_state.tela == "novo_curso":
     if st.button("Salvar curso"):
         if nome_curso:
             c.execute(
-                "INSERT INTO cursos (nome,user_id) VALUES (?,?)",
-                (nome_curso, st.session_state.user_id)
+                "INSERT INTO cursos (nome,user_id,turma) VALUES (?,?,?)",
+                (nome_curso, st.session_state.user_id, turma_curso)
             )
+            
             curso_id = c.lastrowid
 
             for aluno in st.session_state.lista_alunos:
@@ -290,13 +297,12 @@ elif st.session_state.tela == "editar_alunos":
 
     nome = st.text_input("Nome")
     email = st.text_input("Email")
-    turma = st.text_input("Turma", value=turma_padrao)
 
     if st.button("Adicionar"):
-        if nome and email and turma:
+        if nome and email:
             c.execute(
-                "INSERT INTO alunos (nome,email,turma,curso_id) VALUES (?,?,?,?)",
-                (nome, email, turma, st.session_state.curso_id)
+                "INSERT INTO alunos (nome,email,curso_id) VALUES (?,?,?,?)",
+                (nome, email, st.session_state.curso_id)
             )
             conn.commit()
             st.rerun()
@@ -481,7 +487,14 @@ elif st.session_state.tela == "nova_atividade":
             if col_next.button("➡️ Próximo", disabled=(i >= len(grupos) - 1)):
                 st.session_state.indice += 1
                 st.rerun()
+                
+           curso = c.execute(
+               "SELECT turma FROM cursos WHERE id=?",
+               (st.session_state.curso_id,)
+           ).fetchone()
 
+           turma_curso = curso[0] if curso else "SEM TURMA"
+        
         # 💾 SALVAR
         if st.button("💾 Salvar atividade"):
 
@@ -514,7 +527,7 @@ elif st.session_state.tela == "nova_atividade":
                         atv_id,
                         r["aluno"],
                         r["email"],
-                        grupo["turma"],
+                        turma_curso,
                         r["feedback"],
                         ";".join(caminhos)
                     ))
