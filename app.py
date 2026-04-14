@@ -174,27 +174,35 @@ elif st.session_state.tela == "cursos":
         (st.session_state.user_id,)
     ).fetchall()
 
-    for curso in cursos:
+    # 🔥 BOTÃO SEMPRE VISÍVEL (ANTES DO LOOP)
+    if st.button("➕ Novo curso"):
+        st.session_state.tela = "novo_curso"
+        st.rerun()
 
-        col1, col2, col3 = st.columns([4, 1, 1])
+    if not cursos:
+        st.info("Nenhum curso cadastrado ainda.")
+    else:
+        for curso in cursos:
 
-        with col1:
-            if st.button(curso[1], key=f"open_{curso[0]}"):
-                st.session_state.curso_id = curso[0]
-                st.session_state.tela = "atividades"
-                st.rerun()
+            col1, col2, col3 = st.columns([4, 1, 1])
 
-        with col2:
-            if st.button("✏️", key=f"edit_{curso[0]}"):
-                st.session_state.curso_id = curso[0]
-                st.session_state.tela = "editar_alunos"
-                st.rerun()
+            with col1:
+                if st.button(curso[1], key=f"open_{curso[0]}"):
+                    st.session_state.curso_id = curso[0]
+                    st.session_state.tela = "atividades"
+                    st.rerun()
 
-        with col3:
-            if st.button("🗑️", key=f"del_{curso[0]}"):
-                st.session_state.confirm_del_curso = curso[0]
+            with col2:
+                if st.button("✏️", key=f"edit_{curso[0]}"):
+                    st.session_state.curso_id = curso[0]
+                    st.session_state.tela = "editar_alunos"
+                    st.rerun()
 
-        # confirmação
+            with col3:
+                if st.button("🗑️", key=f"del_{curso[0]}"):
+                    st.session_state.confirm_del_curso = curso[0]
+
+        # confirmação fora do loop
         if "confirm_del_curso" in st.session_state:
             st.warning("⚠️ Tem certeza que deseja excluir este curso e todos os dados vinculados?")
 
@@ -214,11 +222,6 @@ elif st.session_state.tela == "cursos":
                 if st.button("❌ Cancelar", key="cancel_curso"):
                     del st.session_state.confirm_del_curso
                     st.rerun()
-
-        if st.button("➕ Novo curso"):
-            st.session_state.tela = "novo_curso"
-            st.rerun()
-
 # =========================
 # 👥 NOVO CURSO
 # =========================
