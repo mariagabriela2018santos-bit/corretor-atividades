@@ -554,9 +554,8 @@ elif st.session_state.tela == "nova_atividade":
             st.rerun()
 
 
-
 # =========================
-# 📊 RESULTADO (COM EMAIL)
+# 📊 RESULTADO (COM EDIÇÃO DE FEEDBACK)
 # =========================
 elif st.session_state.tela == "resultado":
 
@@ -579,10 +578,8 @@ elif st.session_state.tela == "resultado":
     senha_app = st.text_input("Senha de app", type="password")
     assinatura = st.text_area("Assinatura do e-mail", value="Att,\nProfessor(a)")
 
-    # 🔥 NOVO CAMPO PDF
     pdf_file = st.file_uploader("📎 Anexar material de apoio (PDF)", type=["pdf"])
 
-    # 🔥 guardar no estado (ESSENCIAL)
     if pdf_file:
         st.session_state.pdf_bytes = pdf_file.read()
         st.session_state.pdf_nome = pdf_file.name
@@ -595,10 +592,14 @@ elif st.session_state.tela == "resultado":
     else:
         st.dataframe(df[["nome", "turma", "email", "feedback"]])
 
+        # =========================
+        # 📤 ENVIAR TODOS
+        # =========================
         if st.button("📤 Enviar para todos", key="enviar_todos"):
             for _, row in df.iterrows():
                 if int(row["enviado"]) == 0:
                     caminhos = row["imagens"].split(";") if row["imagens"] else []
+
                     try:
                         enviar_email(
                             row["email"],
@@ -629,11 +630,16 @@ elif st.session_state.tela == "resultado":
             st.success("Envio finalizado!")
             st.rerun()
 
+        # =========================
+        # 👤 LOOP DOS ALUNOS
+        # =========================
         for idx, row in df.iterrows():
 
             st.markdown(f"### {row['nome']} - {row['turma']}")
 
-            # 🔥 MOSTRAR IMAGENS (VOLTOU)
+            # =========================
+            # 🖼️ IMAGENS
+            # =========================
             if row["imagens"]:
                 caminhos = row["imagens"].split(";")
 
@@ -644,22 +650,71 @@ elif st.session_state.tela == "resultado":
                         col1.image(caminhos[i], use_column_width=True)
 
                     if i + 1 < len(caminhos) and os.path.exists(caminhos[i + 1]):
-                         col2.image(caminhos[i + 1], use_column_width=True)
+                        col2.image(caminhos[i + 1], use_column_width=True)
 
-            # 🔥 FEEDBACK (VOLTOU)
-            st.markdown(f"**Feedback:** {row['feedback']}")
+            # =========================
+            # ✏️ FEEDBACK EDITÁVEL
+            # =========================
+            edit_key = f"editando_{idx}"
 
-            # 🔥 STATUS (VOLTOU)
+            if edit_key not in st.session_state:
+                st.session_state[edit_key] = False
+
+            col_fb, col_btn = st.columns([8, 1])
+
+            with col_fb:
+                if not st.session_state[edit_key]:
+                    st.markdown(f"**Feedback:** {row['feedback']}")
+                else:
+                    novo_feedback = st.text_area(
+                        "Editar feedback",
+                        value=row["feedback"],
+                        key=f"edit_text_{idx}"
+                    )
+
+            with col_btn:
+                if not st.session_state[edit_key]:
+                    if st.button("✏️", key=f"editar_{idx}"):
+                        st.session_state[edit_key] = True
+                        st.rerun()
+                else:
+                    if st.button("💾", key=f"salvar_{idx}"):
+
+                        conn_edit = sqlite3.connect("app.db")
+                        c_edit = conn_edit.cursor()
+
+                        c_edit.execute("""
+                            UPDATE resultados
+                            SET feedback=?
+                            WHERE atividade_id=? AND email=?
+                        """, (
+                            st.session_state[f"edit_text_{idx}"],
+                            st.session_state.atividade_id,
+                            row["email"]
+                        ))
+
+                        conn_edit.commit()
+                        conn_edit.close()
+
+                        st.session_state[edit_key] = False
+                        st.success("Feedback atualizado!")
+                        st.rerun()
+
+            # =========================
+            # 📌 STATUS
+            # =========================
             status = "✅ Enviado" if int(row["enviado"]) == 1 else "⏳ Não enviado"
             st.write(f"Status: {status}")
 
-            # 🔥 BOTÃO INDIVIDUAL (COM PDF)
+            # =========================
+            # 📧 ENVIO INDIVIDUAL
+            # =========================
             if int(row["enviado"]) == 0:
                 if st.button(
                     f"📧 Enviar para {row['nome']}",
                     key=f"send_{row['email']}_{idx}"
                 ):
-            
+
                     caminhos = row["imagens"].split(";") if row["imagens"] else []
 
                     try:
