@@ -34,6 +34,7 @@ Segue o feedback da sua atividade:
 
 {feedback}
 
+Em anexo está a atividade realizada e um texto de apoio caso queira se aprofundar mais no assunto.
 {assinatura}
 """
     msg.set_content(corpo)
@@ -373,7 +374,10 @@ elif st.session_state.tela == "nova_atividade":
 
     if uploaded and nome_atv:
 
-        if "grupos" not in st.session_state:
+        # =========================
+        # 📄 CARREGAR PDF
+        # =========================
+        if "grupos" not in st.session_state and "imagens" not in st.session_state:
 
             pdf_bytes = uploaded.read()
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -384,54 +388,64 @@ elif st.session_state.tela == "nova_atividade":
                 img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                 imagens.append(img)
 
-# =========================
-# NOVO: MARCAÇÃO MANUAL
-# =========================
+            st.session_state.imagens = imagens
 
-if "quebras" not in st.session_state:
-    st.session_state.quebras = [0]
+        # =========================
+        # ✂️ ETAPA 1: MARCAR QUEBRAS
+        # =========================
+        if "grupos" not in st.session_state:
 
-st.subheader("📌 Marque onde começa um novo aluno")
+            imagens = st.session_state.imagens
 
-for i, img in enumerate(imagens):
+            if "quebras" not in st.session_state:
+                st.session_state.quebras = [0]
 
-    st.image(img, use_column_width=True)
+            st.subheader("📌 Marque onde começa um novo aluno")
 
-    if st.button(f"➡️ Novo aluno começa aqui (página {i+1})", key=f"break_{i}"):
-        if i not in st.session_state.quebras:
-            st.session_state.quebras.append(i)
-            st.success(f"Marcado início na página {i+1}")
-# 👇 AQUI
-if st.button("↩️ Desfazer última marcação"):
-    if len(st.session_state.quebras) > 1:
-        st.session_state.quebras.pop()
-        st.warning("Última marcação removida")
-        
-# botão para finalizar marcação
-if st.button("✅ Finalizar separação"):
-    
-    quebras = sorted(st.session_state.quebras)
-    quebras.append(len(imagens))
+            for i, img in enumerate(imagens):
 
-    grupos = []
+                st.image(img, use_column_width=True)
 
-    for i in range(len(quebras)-1):
-        inicio = quebras[i]
-        fim = quebras[i+1]
+                if st.button(f"➡️ Novo aluno começa aqui (página {i+1})", key=f"break_{i}"):
+                    if i not in st.session_state.quebras:
+                        st.session_state.quebras.append(i)
+                        st.success(f"Marcado início na página {i+1}")
 
-        grupos.append({
-            "turma": "UNICA",  # 👈 substitui QR
-            "paginas": imagens[inicio:fim]
-        })
+            if st.button("↩️ Desfazer última marcação"):
+                if len(st.session_state.quebras) > 1:
+                    st.session_state.quebras.pop()
+                    st.warning("Última marcação removida")
 
-    st.session_state.grupos = grupos
-    st.session_state.indice = 0
-    st.session_state.respostas = {}
+            if st.button("✅ Finalizar separação"):
 
-    del st.session_state.quebras
+                quebras = sorted(st.session_state.quebras)
+                quebras.append(len(imagens))
 
-    st.rerun()
+                grupos = []
 
+                for i in range(len(quebras)-1):
+                    inicio = quebras[i]
+                    fim = quebras[i+1]
+
+                    grupos.append({
+                        "turma": "UNICA",
+                        "paginas": imagens[inicio:fim]
+                    })
+
+                st.session_state.grupos = grupos
+                st.session_state.indice = 0
+                st.session_state.respostas = {}
+
+                del st.session_state.quebras
+                del st.session_state.imagens
+
+                st.rerun()
+
+            st.stop()  # 🔥 trava aqui até finalizar separação
+
+        # =========================
+        # 🧠 ETAPA 2: FEEDBACK (igual ao seu)
+        # =========================
         grupos = st.session_state.grupos
         i = st.session_state.indice
         grupo = grupos[i]
@@ -455,10 +469,8 @@ if st.button("✅ Finalizar separação"):
 
         with col2:
 
-           alunos_filtrados = alunos_df
-           st.subheader("Selecionar aluno")
-
-            st.subheader(f"Turma: {turma_qr}")
+            alunos_filtrados = alunos_df
+            st.subheader("Selecionar aluno")
 
             resposta_atual = st.session_state.respostas.get(i, {})
 
@@ -471,7 +483,6 @@ if st.button("✅ Finalizar separação"):
                     st.rerun()
 
             else:
-                # 🔥 NOVO CAMPO COM AUTOCOMPLETE
                 alunos_lista = alunos_filtrados["nome"].tolist()
 
                 aluno_escolhido = st.selectbox(
@@ -557,7 +568,6 @@ if st.button("✅ Finalizar separação"):
 
             st.session_state.tela = "atividades"
             st.rerun()
-
 # =========================
 # 📊 RESULTADO (COM EMAIL)
 # =========================
