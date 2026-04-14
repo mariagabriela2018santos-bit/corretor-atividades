@@ -582,8 +582,13 @@ elif st.session_state.tela == "resultado":
     # 🔥 NOVO CAMPO PDF
     pdf_file = st.file_uploader("📎 Anexar material de apoio (PDF)", type=["pdf"])
 
-    pdf_bytes = pdf_file.read() if pdf_file else None
-    pdf_nome = pdf_file.name if pdf_file else "material_apoio.pdf"
+    # 🔥 guardar no estado (ESSENCIAL)
+    if pdf_file:
+        st.session_state.pdf_bytes = pdf_file.read()
+        st.session_state.pdf_nome = pdf_file.name
+
+    pdf_bytes = st.session_state.get("pdf_bytes", None)
+    pdf_nome = st.session_state.get("pdf_nome", "material_apoio.pdf")
 
     if df.empty:
         st.warning("Nenhum dado encontrado")
