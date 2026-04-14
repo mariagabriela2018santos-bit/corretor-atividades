@@ -61,18 +61,6 @@ def voltar(destino):
         st.rerun()
 
 # =========================
-# 🧠 QR CODE
-# =========================
-def detectar_qr(img):
-    img_np = np.array(img)
-    detector = cv2.QRCodeDetector()
-    data, bbox, _ = detector.detectAndDecode(img_np)
-
-    if data:
-        return data.strip().upper()
-    return None
-
-# =========================
 # 🗄️ BANCO
 # =========================
 conn = sqlite3.connect("app.db", check_same_thread=False)
@@ -396,27 +384,53 @@ elif st.session_state.tela == "nova_atividade":
                 img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                 imagens.append(img)
 
-            grupos = []
-            paginas = []
-            turma_atual = None
+# =========================
+# NOVO: MARCAÇÃO MANUAL
+# =========================
 
-            for img in imagens:
-                qr = detectar_qr(img)
+if "quebras" not in st.session_state:
+    st.session_state.quebras = [0]
 
-                if qr:
-                    if paginas:
-                        grupos.append({"turma": turma_atual, "paginas": paginas})
-                    turma_atual = qr
-                    paginas = [img]
-                else:
-                    paginas.append(img)
+st.subheader("📌 Marque onde começa um novo aluno")
 
-            if paginas:
-                grupos.append({"turma": turma_atual, "paginas": paginas})
+for i, img in enumerate(imagens):
 
-            st.session_state.grupos = grupos
-            st.session_state.indice = 0
-            st.session_state.respostas = {}
+    st.image(img, use_column_width=True)
+
+    if st.button(f"➡️ Novo aluno começa aqui (página {i+1})", key=f"break_{i}"):
+        if i not in st.session_state.quebras:
+            st.session_state.quebras.append(i)
+            st.success(f"Marcado início na página {i+1}")
+# 👇 AQUI
+if st.button("↩️ Desfazer última marcação"):
+    if len(st.session_state.quebras) > 1:
+        st.session_state.quebras.pop()
+        st.warning("Última marcação removida")
+        
+# botão para finalizar marcação
+if st.button("✅ Finalizar separação"):
+    
+    quebras = sorted(st.session_state.quebras)
+    quebras.append(len(imagens))
+
+    grupos = []
+
+    for i in range(len(quebras)-1):
+        inicio = quebras[i]
+        fim = quebras[i+1]
+
+        grupos.append({
+            "turma": "UNICA",  # 👈 substitui QR
+            "paginas": imagens[inicio:fim]
+        })
+
+    st.session_state.grupos = grupos
+    st.session_state.indice = 0
+    st.session_state.respostas = {}
+
+    del st.session_state.quebras
+
+    st.rerun()
 
         grupos = st.session_state.grupos
         i = st.session_state.indice
@@ -441,11 +455,8 @@ elif st.session_state.tela == "nova_atividade":
 
         with col2:
 
-            turma_qr = grupo["turma"]
-
-            alunos_filtrados = alunos_df[
-                alunos_df["turma"].str.upper() == turma_qr
-            ]
+           alunos_filtrados = alunos_df
+           st.subheader("Selecionar aluno")
 
             st.subheader(f"Turma: {turma_qr}")
 
