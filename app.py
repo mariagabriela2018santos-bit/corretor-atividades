@@ -229,6 +229,7 @@ elif st.session_state.tela == "novo_curso":
     st.title("Novo curso")
 
     nome_curso = st.text_input("Nome do curso")
+    turma_padrao = st.text_input("Turma do curso (ex: 3ºA)")
 
     if "lista_alunos" not in st.session_state:
         st.session_state.lista_alunos = []
@@ -286,7 +287,7 @@ elif st.session_state.tela == "editar_alunos":
 
     nome = st.text_input("Nome")
     email = st.text_input("Email")
-    turma = st.text_input("Turma")
+    turma = st.text_input("Turma", value=turma_padrao)
 
     if st.button("Adicionar"):
         if nome and email and turma:
