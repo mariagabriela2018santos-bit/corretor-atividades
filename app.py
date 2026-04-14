@@ -395,7 +395,7 @@ elif st.session_state.tela == "nova_atividade":
         # ✂️ ETAPA 1: MARCAR
         # =========================
         if st.session_state.get("etapa") == "marcar":
-
+ 
             imagens = st.session_state.imagens
 
             if "quebras" not in st.session_state:
