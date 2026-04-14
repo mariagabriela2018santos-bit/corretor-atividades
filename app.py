@@ -347,31 +347,30 @@ elif st.session_state.tela == "atividades":
             if st.button("🗑️", key=f"del_{atv[0]}"):
                 st.session_state.confirm_del_atividade = atv[0]
 
-        # confirmação
-        if "confirm_del_atividade" in st.session_state:
-            st.warning("⚠️ Tem certeza que deseja excluir esta atividade?")
+    # 🔥 CONFIRMAÇÃO (fora do loop!)
+    if "confirm_del_atividade" in st.session_state:
+        st.warning("⚠️ Tem certeza que deseja excluir esta atividade?")
 
-            col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-            with col1:
-                if st.button("✅ Sim, excluir", key="confirm_atv"):
-                    aid = st.session_state.confirm_del_atividade
-                    c.execute("DELETE FROM atividades WHERE id=?", (aid,))
-                    c.execute("DELETE FROM resultados WHERE atividade_id=?", (aid,))
-                    conn.commit()
-                    del st.session_state.confirm_del_atividade
-                    st.rerun()
+        with col1:
+            if st.button("✅ Sim, excluir"):
+                aid = st.session_state.confirm_del_atividade
+                c.execute("DELETE FROM atividades WHERE id=?", (aid,))
+                c.execute("DELETE FROM resultados WHERE atividade_id=?", (aid,))
+                conn.commit()
+                del st.session_state.confirm_del_atividade
+                st.rerun()
 
+        with col2:
+            if st.button("❌ Cancelar"):
+                del st.session_state.confirm_del_atividade
+                st.rerun()
 
-            with col2:
-                if st.button("❌ Cancelar", key="cancel_atv"):
-                    del st.session_state.confirm_del_atividade
-                    st.rerun()
-
-          if st.button("➕ Nova atividade"):
-              st.session_state.tela = "nova_atividade"
-            st.rerun()
-
+    # 🔥 BOTÃO NOVO (AGORA NO LUGAR CERTO)
+    if st.button("➕ Nova atividade"):
+        st.session_state.tela = "nova_atividade"
+        st.rerun()
 # =========================
 # ✏️ NOVA ATIVIDADE
 # =========================
