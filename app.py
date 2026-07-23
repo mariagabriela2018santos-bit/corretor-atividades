@@ -30,10 +30,6 @@ def enviar_email(destinatario, nome, feedback, caminhos_imagens, assunto, email_
     corpo = f"""
 Olá, {nome}!
 
-Segue o feedback da sua atividade:
-
-{feedback}
-
 Encaminhamos, em anexo, a atividade realizada e o material de apoio destinado à revisão e ao aprofundamento dos conteúdos abordados.
 
 {assinatura}
