@@ -401,10 +401,10 @@ elif st.session_state.tela == "nova_atividade":
 
             imagens = []
             for page in doc:
-                pix = page.get_pixmap()
+                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
                 img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-                imagens.append(img)
-
+                imagens.append(img.copy())
+                
             # dividir automaticamente
             grupos = []
             for i in range(0, len(imagens), paginas_por_aluno):
@@ -437,10 +437,10 @@ elif st.session_state.tela == "nova_atividade":
             paginas = grupo["paginas"]
             for j in range(0, len(paginas), 2):
                 c1, c2 = st.columns(2)
-                if j < len(paginas):
-                    c1.image(paginas[j], use_column_width=True)
-                if j + 1 < len(paginas):
-                    c2.image(paginas[j + 1], use_column_width=True)
+                if j < len(paginas) and paginas[j] is not None:
+                    c1.image(paginas[j], use_container_width=True)
+                if j + 1 < len(paginas) and paginas[j + 1] is not None:
+                    c2.image(paginas[j + 1], use_container_width=True)
 
         # 🧠 LATERAL
         with col2:
