@@ -20,7 +20,7 @@ if not os.path.exists("imagens"):
 # =========================
 # 📧 FUNÇÃO EMAIL (ATUALIZADA)
 # =========================
-def enviar_email(destinatario, nome, feedback, caminhos_imagens, assunto, email_remetente, senha_app, assinatura, pdf_bytes=None, pdf_nome="material_apoio.pdf"):
+def enviar_email(destinatario, nome, feedback, caminhos_imagens, assunto, email_remetente, senha_app, pdf_bytes=None, pdf_nome="material_apoio.pdf"):
 
     msg = EmailMessage()
     msg["Subject"] = assunto
@@ -32,7 +32,7 @@ Olá, {nome}!
 
 Encaminhamos, em anexo, a atividade realizada e o material de apoio destinado à revisão e ao aprofundamento dos conteúdos abordados.
 
-{assinatura}
+
 """
     msg.set_content(corpo)
 
