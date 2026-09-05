@@ -74,6 +74,14 @@ def voltar(destino):
 conn = sqlite3.connect("app.db", check_same_thread=False)
 c = conn.cursor()
 
+st.write("📍 Local do banco:", os.path.abspath("app.db"))
+
+usuarios = c.execute(
+    "SELECT id, username FROM users"
+).fetchall()
+
+st.write("👤 Usuários cadastrados:", usuarios)
+
 c.execute("""CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
